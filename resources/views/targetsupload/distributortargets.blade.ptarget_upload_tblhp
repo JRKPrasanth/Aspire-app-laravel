@@ -1,0 +1,439 @@
+@extends('layouts.header')
+@section('content')
+
+<style type="text/css">
+	.select2-container {
+		width: 150px !important;
+	}
+.batchnumber,.select2{
+
+
+    margin-top: 1.5% !important;
+    
+
+}
+
+input#choosefile {
+	width: 18.5rem;
+    
+    background: #9baff1;
+    color: #fff;
+    padding: 0px;
+    
+}
+input,select{
+	height: auto;
+}
+</style>
+
+<h2 class="heads">Target UPLOAD</h2>
+
+<div class="panel panel-visible" id="spy1">
+
+    <div class="panel-title">
+        <form method="post" action="" id="targetupload" enctype="multipart/form-data">
+                {{ @csrf_field() }}
+
+
+    	<div class="row ">
+        	<div class="col-md-12">
+		    	<input name="batch_name" type="text" class=" batch_name hide" />
+
+		    	<a href="../public/Uploads/targets_upload.csv" class="col-md-2 lst btn download" download>Download Template</a>
+
+		    	<span class=' col-md-2 lst btn'><input id="choosefile" name="choosefile"  type="file" required/></span>
+
+		    	<button type="button" id="upload" class="col-md-1 btn upload">Upload</button>
+
+		    	<select name='batchnumber' id='batchnumber' class='col-md-2 form-control batchnumber select2'></select>
+			</div>
+		</div>
+    
+	    <div class="row">
+
+	        
+	        	<div class="col-md-6 text-left">
+		           	<a class='btn  search searchfile_cls'>Search</a>
+		            <a class='btn  verify validate'>Validate</a>
+		            <a class='btn  vie load loadd'>Load</a>
+	            </div>
+	            <div class="col-md-6 text-right">
+ 	        <a id="editdata" class="btn sec"> Edit </a> 
+		          <button type='button' href='' class='btn clearsearch'>Clear Search </button>
+   <button type='button' href='' class='btn showcolumn'>Show Column </button> 
+	        	</div>
+	        
+
+	    </div>
+
+    	</form>
+	</div>
+	<div class="row">
+	 	<div class="col-md-12" >
+	 		<table id="targetuploadgrid"></table>
+	 	</div>
+	</div>
+</div>
+    
+
+
+
+
+<!--upload  Modal -->
+<div id="myModal1" class="modal fade" role="dialog">
+<div class="modal-dialog">
+<!-- Modal content-->
+<div class="modal-content" style='height:208px;'>
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal">&times;</button>
+<h4 class="modal-title">Batch Name</h4>
+</div>
+<div class="modal-body form-group "><input type="hidden"  />
+
+
+<div class="col-md-12 batch_data_div">
+
+<div class='col-md-5' style="float:left">
+
+<input type="text" name='batch_name1'  id="batch_name1" class="form-control"  readonly="true" value="BATCH-<?php echo date('Y-m-d');?>">
+
+
+</div>
+
+<div class="col-md-1">                -                </div>
+
+<div class='mcontent4 form-group col-md-6'>
+<input type="text" name='batch_name2'  id="batch_name2" class="form-control"  >
+
+</div>
+
+<div class="col-md-12  ">
+<button type="button" class="index btn btn-success" data-val="modal">Go</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!--end-->
+
+<style>
+
+	
+span.lst {
+    display: inline-block;
+   
+}
+	a {
+    color: #fff;
+    text-decoration: none;
+}
+	
+
+	/*#gview_pricelistuploadgrid{
+	margin-top: -27px;
+	}*/
+.ui-th-column, 
+.ui-jqgrid .ui-jqgrid-htable th.ui-th-column{
+	white-space: normal;
+}
+.ui-jqgrid .ui-jqgrid-pager{
+	white-space: normal;
+}
+
+</style>
+
+
+<script type="text/javascript">
+
+$( document ).ready(function() {
+
+	$("#targetuploadgrid").jqGrid({
+	url: "gettargetuploaddata",
+	datatype: "json",
+	mtype: "GET",
+		colModel: [
+	  { name: "targets_id", label: "id", width:100,hidden:true },
+            { name: "batch_no", label: "Batch No.", width: 200,editable:true, editrules:{date:true}},
+            { name: "batch_status", label: "Batch Status", width: 200,editable:true, editrules:{date:true}},
+            { name: "batch_comments", label: "Batch Comments", width: 200,editable:true, editrules:{date:true}},
+            { name: "stockist_name", label: "Stockist Name", width: 200,editable:true, editrules:{date:true}},
+            { name: "state_name", label: "State", width:80, editable:true, editrules:{date:true}},
+            { name: "city_name", label: "City", width:250, editable:true, editrules:{date:true}},
+            { name: "product_name", label: "Product Name", width:200,editable:true, editrules:{date:true}},
+            { name: "target_qty", label: "Target Qty", width:350,editable:true, editrules:{date:true}},
+            ],
+		 	iconSet: "fontAwesome",
+            rowNum: 10,
+	        rowList: [10,20,50,100,250,500,1000],
+	        sortorder: "asc",
+	        viewrecords: true,
+	        gridview: true,
+	        rownumbers:true,
+	        pager: "#targetuploadgrid",
+	        autowidth:true,
+	        searching: {
+	            defaultSearch: "cn"
+	        }
+  	});
+
+	jQuery("#targetuploadgrid").jqGrid('filterToolbar',{stringResult: true,searchOnEnter : false});
+$("#targetuploadgrid").jqGrid("setLabel", "rn", "S.No");
+
+	$("#editdata").click(function()
+	{
+		var gr = jQuery("#targetuploadgrid").jqGrid('getGridParam','selrow');
+		var cellValue = jQuery("#targetuploadgrid").jqGrid ('getCell', gr, 'product_upload_id');
+		var batchstatus = jQuery("#targetuploadgrid").jqGrid ('getCell', gr, 'batch_status');
+
+		if( cellValue )
+		{
+			if(batchstatus=="ERROR"){
+			window.location.replace('targetuploadedit/' +cellValue);
+		}
+		else
+		{
+		notyMsg("info","Batch not allow to edit");
+		}
+		}
+		else
+		{
+		notyMsg("info","Please Select Row");
+		}
+	});
+
+
+showcolumn('targetuploadgrid');
+
+	/*********** CLEAR search **************************/
+
+	$(".clearsearch").click(function() {
+		var grid = $("#targetuploadgrid");
+		grid.jqGrid('setGridParam',{search:false});
+
+		var postData = grid.jqGrid('getGridParam','postData');
+		$.extend(postData,{filters:""});
+		grid.trigger("reloadGrid",[{page:1}]);
+		$('input[id*="gs_"]').val("");
+    	$('select[id*="gs_"]').select2('val',['']);		
+	});
+
+
+
+
+
+	$(window).scroll(function() {
+	if ($(this).scrollTop() >150){
+	    $('.header-sticky').addClass("sticky");
+	  }
+  	else{
+	    $('.header-sticky').removeClass("sticky");
+	  }
+	});
+
+	showResponse('<?php echo $status; ?>',"<?php echo $message; ?>");
+
+
+	
+   var condition1='group by batch_name';
+            $("#batchnumber").jCombo("{{ URL::to('jcomboform1?table=target_upload_tbl:batch_name:batch_name') }}&parent="+condition1+'&order_by=batch_name asc',{selected_value:''});
+    
+
+	$('.upload').click(function(){
+		var flname=$("#choosefile").val();
+		if(flname != "" ){
+			$('#myModal1').modal('show');
+			$('.modal-dialog').width('40%');
+			$("#myModal1").modal({backdrop: "static"});
+		}
+		else{
+			notyMsg("info","Please choose file");
+		}
+	});
+
+	$('#myModal1').on('shown.bs.modal', function()
+	{
+		$('.index').click(function()
+		{
+			var tmp1=$('#batch_name1').val();
+			var tmp2=$('#batch_name2').val();
+			if(tmp2 != ""){
+				var temp=tmp1+tmp2;
+				$('.batch_name').val(temp);
+			    var form_data = new FormData(document.getElementById('targetupload'));
+	            $.ajax({
+	                url: "{{URL::to('targetuploaddata')}}",
+	                data: form_data,
+	                type: 'POST',
+	                enctype: 'multipart/form-data',
+	                contentType: false,
+	                processData: false,
+	                success: function (data)
+	                {
+	               		notyMsg("success",data['message']);
+	                    $('.close').trigger('click');
+	                    setTimeout(function(){
+	                        location.reload();
+	                	}, 2000);
+
+	                },
+	                error: function (xhr, status, error)
+	                {
+	                    //$('#preview_image').attr('src', '{{asset('images/noimage.jpg')}}');
+	                }
+	            });
+	        }else{
+	        	notyMsg('info','Please batch name');
+	        }
+		});
+	});
+
+	$('.searchfile_cls').click(function(){
+		var batchname=$("#batchnumber").val();
+		$("#targetuploadgrid").jqGrid('setGridParam', {
+	        postData: {"batchname":batchname }
+	 	}).trigger('reloadGrid');
+	});
+
+
+
+
+	$('.verify').click(function(){
+
+		var batchname=$('#batchnumber option:selected').val();
+		var parm='';
+		var verify='verify';
+		if(batchname!=''){
+			var parm="?batchname="+batchname+'&type=verify';
+		}
+		else
+		{
+			notyMsg("info","Please select batchnumber");
+		}
+
+		var newUrl = refineUrl();//fetch new url
+		var url="{{URL::to('getProductvalidate')}}";
+
+		$.get(url, {'batchname': encodeURIComponent(batchname), 'type': verify}, function (response) {
+			var data=response.status;
+			var message=response.message;
+			if(data == 'success')
+			{
+
+			notyMsg("success",message);
+				 setTimeout(function(){
+			window.location.replace(newUrl);
+			    }, 2000);
+
+			}
+
+			if(data=='info')
+			{
+				notyMsg("info",message);
+				setTimeout(function(){
+			window.location.replace(newUrl);
+			    }, 2000);
+
+			}
+			if(data=='error') {
+			notyMsg("error",message);
+			 setTimeout(function(){
+			window.location.replace(newUrl);
+			    }, 2000);
+			}
+		});
+	});
+
+	$('.load').click(function(){
+
+		var batchname=$('#batchnumber option:selected').val();
+		var parm='';
+		var load='load';
+		if(batchname!=''){
+			// alert(batchname);
+			var parm="?batchname="+batchname+'&type=load';
+		}
+		else
+		{
+			notyMsg("info","Please select batchnumber");
+		}
+				var newUrl = refineUrl();//fetch new url
+		var url="{{URL::to('getProductvalidate')}}";
+
+		$.get(url, {'batchname': encodeURIComponent(batchname), 'type': load}, function (response) {
+			var data=response.status;
+			var message=response.message;
+			if(data == 'success')
+			{
+
+			notyMsg("success",message);
+				 setTimeout(function(){
+			window.location.replace(newUrl);
+			    }, 2000);
+
+			}
+
+			if(data=='info')
+			{
+				notyMsg("info",message);
+				setTimeout(function(){
+			window.location.replace(newUrl);
+			    }, 2000);
+
+			}
+			if(data=='error') {
+			notyMsg("error",message);
+			 setTimeout(function(){
+			window.location.replace(newUrl);
+			    }, 2000);
+			}
+		});
+
+	});
+
+});
+
+
+/*refine url with  params */
+function refineUrl()
+{
+	//get full url
+	var url = window.location.href;
+	//get url after/
+	//var value = url.substring(url.lastIndexOf('/') + 1);
+	//get the part after before ?
+	var value  = url.split("?")[0];
+	// alert(value);
+	return value;
+}
+
+function showResponse(data,message)
+{
+
+	if(data == 'success')
+	{
+		notyMsg("success",message);
+		var url="{{ URL::to('targetupload') }}";
+
+	}
+
+	if(data=='info')
+	{
+		notyMsg("info",message);
+		var url="{{ URL::to('targetupload') }}";
+
+	}
+
+
+	if(data=='error')
+	{
+		notyMsg("error",message);
+		var url="{{ URL::to('targetupload') }}";
+
+	}
+
+
+}
+
+</script>
+@endsection

@@ -1,0 +1,109 @@
+
+/************************* Bredcrums styles ************************/
+.steps {
+  position: relative;
+    text-align: left;
+    margin: 10px 0;
+}
+
+.step {
+  display: inline-block;
+  position: relative;
+  line-height: 20px;
+  padding: 0 25px 0 40px;
+  background-color: lightgrey;
+  vertical-align: top;
+  overflow: hidden;
+  border-color: darkgrey;
+  border-style: solid;
+  border-width: 1px 0;
+}
+.step:before {
+  content: '';
+    display: block;
+    position: absolute;
+    top: 3px;
+    left: -7px;
+    background: lightgrey;
+    border-top: 1px solid darkgrey;
+    border-right: 1px solid darkgrey;
+    -webkit-box-shadow: 0 0 10px darkgrey;
+    box-shadow: 0 0 10px darkgrey;
+    width: 15px;
+    height: 15px;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+.step.complete {
+  overflow: hidden;
+}
+.step.active {
+  background: white;
+  -webkit-box-shadow: 0 0 10px #767676;
+          box-shadow: 0 0 10px #767676;
+  overflow: visible;
+  border-color: #767676;
+}
+.step.active:before {
+  border-color: #767676;
+  -webkit-box-shadow: inset -10px 10px 5px -5px #c6c6c6, inset 10px -10px 20px lightgrey;
+          box-shadow: inset -10px 10px 5px -5px #c6c6c6, inset 10px -10px 20px lightgrey;
+}
+.step.active + .step:before {
+  background: white;
+  border-color: #767676;
+  -webkit-box-shadow: 0 0 10px #767676;
+          box-shadow: 0 0 10px #767676;
+}
+.step:first-of-type {
+  padding-left: 20px;
+  border-left-width: 1px;
+}
+.step:first-of-type:before {
+  display: none;
+}
+.step:last-of-type {
+  border-right-width: 1px;
+}
+.rem {
+    font-size: 21px;
+    color: red;
+    padding: 3px;
+}
+
+.addbtn {
+    font-size: 21px;
+    color: red;
+    padding: 3px;
+}
+
+
+
+  .additl-group .additl {
+    border-radius: 5px;
+    border-color: #EEEEEE;
+        padding:0;
+  }
+  .additl-default > .additl-heading {
+    color: #fff;
+    background-color: #6f8be6fc;
+    border-color: #EEEEEE;
+                line-height:0.7;
+  }
+  .additl-title {
+    font-size: 14px;
+  }
+  .additl-title > a {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+  }
+  .short-full {
+    float: right;
+    color: #fff;
+  }
+  .additl-default > .additl-heading + .additl-collapse > .additl-body {
+    border: solid 0px #EEEEEE;
+               padding:0px;
+  }

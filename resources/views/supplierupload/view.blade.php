@@ -1,0 +1,31 @@
+@extends('layouts.header')
+@section('content')
+
+
+<div class="panel panel-visible" id="spy1">
+<div class="panel-heading">
+<h2> Openstock Details</h2> 
+<span class="ui_close_btn"><a href="../openstockupload" class="collapse-close pull-right btn-danger" onclick="../openstockupload"></a></span>
+</div>
+
+
+<div class="row">
+<div class="col-md-12">
+<form action="">
+<table  class="table table-bordered table-hover ">
+			<tbody>
+				<tr><td>Product name:</td><td>{{$values['item_name'] }}</td></tr>
+				<tr><td>Subinventory Name:</td><td>{{$values['subinventory_name'] }}</td></tr>
+				<tr><td>Locator Code:</td><td>{{ $values['locator_code'] }}</td></tr>
+				<tr><td>Qty:</td><td>{{ $values['qty']}}</td></tr>
+				<tr><td>Batch Name:</td><td>{{ $values['batch_name']}}</td></tr>
+				<tr><td>Batch Date:</td><td>{{ $values['batch_date']}}</td></tr>
+				<tr><td>Batch Status:</td><td>{{ $values['batch_status']}}</td></tr>
+				<tr><td>Batch Comments:</td><td>{{ $values['batch_comments']}}</td></tr>
+			</tbody>
+		</table>
+</form>
+</div>
+</div>
+</div>
+@endsection

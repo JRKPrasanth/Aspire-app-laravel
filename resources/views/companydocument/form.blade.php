@@ -1,0 +1,242 @@
+@extends('layouts.header')
+@section('content')
+  <h3 class="text-danger">Company Document</h3>
+  @include('layouts.breadcrumb')
+
+
+
+  <div class="card shadow-lg rounded-4 border-0">
+    <div class="card-body">
+      <form id="save">
+        <?php $data = \Session::get('data');
+  if (isset($data[$pageMethod]['save'])) { ?>
+
+        <input type="hidden" name="edit_id" id="edit_id" value="">
+        {{ csrf_field() }}
+
+        <div class="row g-4">
+          <!-- Position -->
+          <div class="col-md-2">
+          </div>
+
+          <!-- Description -->
+          <div class="col-md-4">
+            <label for="document" class="form-label">Document Name</label>
+            <input type="text" id="document" name="document" class="form-control">
+            <span class="badge bg-danger dup_name d-none"></span>
+          </div>
+
+          <!-- Active -->
+          <div class="col-md-4">
+            <label for="active" class="form-label">Active</label>
+            <select name="active" id="active" class="form-select select2">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="text-center mt-4">
+          <button type="button" class="btn btn-success saveform px-4">
+            Save
+          </button>
+        </div>
+
+        <?php } ?>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="card shadow-lg rounded-4 border-0">
+    <div class="card-body">
+      <div class="d-flex justify-content-between mb-3">
+      </div>
+      <div class="table-responsive">
+        <table id="PosTbl" class="table table-bordered table-striped w-100">
+          <thead>
+            <tr class="table-warning">
+              <th>Document</th>
+              <th>Active</th>
+              <th>Actions</th>
+            </tr>
+            <tr class="table-info">
+              <th><input type="text" class="form-control form-control-sm column-search" placeholder="Search" /></th>
+              <th><input type="text" class="form-control form-control-sm column-search" placeholder="Search" /></th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+@endsection
+@push('scripts')
+
+  <script>
+
+    $(document).ready(function () {
+      var table = $('#PosTbl').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ route('companydocumentgrid') }}",
+        columns: [
+          { data: 'document', name: 'document' },
+          { data: 'active', name: 'active' },
+          {
+            data: 'id',
+            name: 'actions',
+            orderable: false,
+            searchable: false,
+            render: function (data, type, row) {
+              let buttons = '';
+              if (window.toolbarButtons?.some(btn => btn.attr.id === 'edit-btn')) {
+                buttons += `
+          <button type="button" class="btn btn-sm btn-primary edit-btn"
+            data-id="${row.id}"
+            data-code="${row.document}"
+            data-active="${row.active}">
+            <i class="bi bi-pencil"></i>
+          </button>`;
+              }
+              if (window.toolbarButtons?.some(btn => btn.attr.id === 'delete')) {
+                buttons += `
+            <button type="button" class="btn btn-sm btn-danger delete-btn"
+              data-id="${row.id}">
+              <i class="bi bi-trash"></i>
+            </button>`;
+              }
+              return buttons;
+            }
+
+          }
+        ]
+      });
+
+
+      $('#PosTbl thead').on('keyup change', '.column-search', function () {
+        let index = $(this).closest('th').index();
+        table.column(index).search(this.value).draw();
+      });
+    });
+
+    // save function
+
+    function duplicate_validate() {
+      var cmp_document = $("#document").val();
+      var edit_id = $("#edit_id").val();
+      var result = true;
+
+      $.ajax({
+        cache: false,
+        url: 'companydocument/checkname',
+        type: 'GET',
+        dataType: 'json',
+        async: false, // blocking check
+        data: { cmp_document: cmp_document, edit_id: edit_id },
+        success: function (response) {
+          if (response == 1) {
+            $('.dup_name')
+              .html('Document: ' + cmp_document + ' Already Exists')
+              .removeClass('d-none')
+              .addClass('d-block');
+
+            $(".cmp_document").val('');
+            dup_chk = false;
+          }
+          else if (response == 0) {
+            var html = "";
+            $('.dup_name').hide();
+            dup_chk = true;
+
+          }
+
+        },
+        error: function (xhr, resp, text) {
+          console.log(xhr, resp, text);
+        }
+      });
+
+      return result;
+    }
+
+    $(document).on('click', '.saveform', function () {
+
+      var form = $("#save");
+      form.parsley().validate();
+      duplicate_validate();
+      if (form.parsley().isValid() && dup_chk == true) {
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $.ajax({
+          url: "{{ URL::to('companydocument/save') }}",
+          type: "POST",
+          data: form.serialize(),
+          success: function (data) {
+            // Show success message
+            showCustomAlert('Saved successfully!','success');
+            // Clear the form (optional)
+            form[0].reset();
+            $('.select2').val('').trigger('change');
+            // Reload DataTable
+            window.location.reload();
+          },
+          error: function (xhr) {
+            showCustomAlert('Save failed. Try again.','error');
+          }
+        });
+      }
+    });
+    // edit function
+    $(document).on('click', '.edit-btn', function () {
+      const id = $(this).data('id');
+      const code = $(this).data('code');
+      const name = $(this).data('name');
+      const active = $(this).data('active');
+
+      // Fill form fields
+      $('input[name="id"]').val(id);
+      $('input[name="document"]').val(code);
+      $('#edit_id').val(id);
+      // For select2 fields, use .val().trigger('change')
+      $('select[name="active"]').val(active).trigger('change');
+    });
+
+
+    // delete function
+    let deleteId = null;
+
+    $(document).on('click', '.delete-btn', function () {
+      deleteId = $(this).data('id');
+      $('#globalDeleteModal').modal('show');
+    });
+
+    $('#globalConfirmDeleteBtn').on('click', function () {
+      if (deleteId) {
+        $.ajax({
+          url: "{{ url('companydocument/delete') }}/" + deleteId,
+          type: "GET",
+          success: function (response) {
+            $('#globalDeleteModal').modal('hide');
+            showCustomAlert('Delete successfully','success');
+            $('#PosTbl').DataTable().ajax.reload();
+
+          },
+          error: function (xhr) {
+            $('#globalDeleteModal').modal('hide');
+            const errorMsg = xhr.responseJSON?.message || 'Delete failed.';
+            showCustomAlert(errorMsg, 'error');
+          }
+        });
+      }
+    });
+
+
+  </script>
+
+
+@endpush

@@ -1,0 +1,131 @@
+@extends('layouts.header')
+@section('content')
+<h3 class="text-danger">ESI Delimiter</h3>
+@include('layouts.breadcrumb')
+
+
+<div class="card shadow-lg rounded-4 border-0 mb-4">
+
+<div class="card-header bg-danger text-white fw-bold">ESI DELIMITER</div>
+  <div class="card-body">
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="form-group row align-items-center">
+          <label for="year" class="col-sm-4 col-form-label fw-semibold">Year</label>
+          <div class="col-sm-8">
+            <select name="year" class="form-select select2 year" id="year">
+              <!-- Options dynamically added -->
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-group row align-items-center">
+          <label for="month" class="col-sm-4 col-form-label fw-semibold">Month</label>
+          <div class="col-sm-8">
+            <select name="month" class="form-select select2 month" id="month">
+              <!-- Options dynamically added -->
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="card shadow-lg rounded-4 border-0">
+	<div class="card-body">
+  <div class="table-responsive">	
+                <div class="detail">
+                    
+                </div>
+	  
+            </div>
+
+  </div>
+</div>
+@endsection
+@push('scripts')
+
+<script>
+	
+	
+       var min = 2024,
+    max = new Date().getFullYear(),
+    select = document.getElementById('year');
+
+    for (var i = max; i>=min; i--)
+    {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.innerHTML = i;
+        select.appendChild(opt);
+    }  	
+		
+		
+// month		
+
+	var url = "{{URL::to('jcomboformlogin?table=month:id:description') }}&order_by=id";
+
+			$.ajax({
+				url: url,
+				type: 'GET',
+	success: function (data) {
+		// Parse JSON string if needed
+		if (typeof data === "string") {
+			try {
+				data = JSON.parse(data);
+			} catch (e) {
+				console.error("Invalid JSON response:", data);
+				return;
+			}
+		}
+
+		$('.month').html('<option value="">-- Select Month --</option>');
+
+		$.each(data, function (i, item) {
+			let selected = item.val == "{{ $row->month ?? '' }}" ? 'selected' : '';
+			$('.month').append(`<option value="${item.val}" ${selected}>${item.option_name}</option>`);
+		});
+
+		$('.month').trigger('change.select2'); 
+	}		
+		
+	});	
+		
+	
+	
+	
+	
+$(document).ready(function()
+{
+  
+      $("#year,#month").change(function()
+    {
+        var year = $('#year').val();
+        var month = $('#month').val();
+        if (month != '' && year != '')
+        {
+
+            
+            var url = "{{URL::to('delimeterreportesi')}}";
+            $('.detail').html("");
+            $.getJSON(url+'/'+month+'/'+year, function(data)
+            {
+               console.log(data.download_ling);
+
+                 $('.detail').append(data.data);
+
+
+            });
+        }
+    });
+
+
+});
+</script>
+
+@endpush

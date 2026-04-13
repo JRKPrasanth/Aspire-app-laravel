@@ -1,0 +1,10 @@
+.col-md-2.dash_wrap{
+    padding: 10px;
+}
+
+.dash_title h4 {
+    font-family: 'Saira Semi Condensed',sans-serif;
+    font-size: 1.65rem;
+    color: #000 !important;
+    padding-bottom: 10px;
+}

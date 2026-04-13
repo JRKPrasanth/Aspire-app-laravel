@@ -1,0 +1,214 @@
+/**
+ * ParamQuery Pro
+ * 
+ * Copyright (c) 2012-2018 Paramvir Dhindsa (http://paramquery.com)
+ * Released under Evaluation license
+ * http://paramquery.com/pro/license/evaluate
+ * 
+ */
+.pq-theme .ui-button .ui-button-text {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.pq-theme .ui-widget-header {
+  background: #dae6f0;
+  border-color: #83abcd;
+}
+.pq-theme .ui-state-default,
+.pq-theme .ui-button {
+  background-color: #fefefe;
+  background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#ebebff));
+  background: -webkit-linear-gradient(top, #fefefe, #b3d2ff);
+  background: -moz-linear-gradient(top, #fefefe, #b3d2ff);
+  background: -ms-linear-gradient(top, #fefefe, #b3d2ff);
+  background: -o-linear-gradient(top, #fefefe, #b3d2ff);
+  filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#fefefe, endColorstr=#ebebff);
+}
+.pq-theme .ui-state-focus {
+  background: #b3d2ff;
+  border-color: #9999ff;
+}
+.pq-theme .ui-state-hover,
+.pq-theme .ui-button:hover {
+  background: #b3d2ff;
+  border-color: #9999ff;
+}
+.pq-theme .ui-widget-header .ui-state-default:not(.ui-state-hover) {
+  border-color: #b3d2ff;
+}
+.pq-theme .ui-state-active {
+  background: #fff;
+  border-color: #9999ff;
+}
+.pq-theme .ui-widget-content {
+  border-color: #b3d2ff;
+}
+div.pq-theme {
+  color: #333;
+  border-color: #b3d2ff !important;
+  background: #b3d2ff;
+}
+.pq-theme *:focus {
+  outline: 1px solid #9999ff;
+}
+.pq-theme select,
+.pq-theme input[type="text"],
+.pq-theme input,
+.pq-theme textarea,
+.pq-theme button.ui-state-default:not(.ui-state-hover),
+.pq-theme .ui-button {
+  border-color: #b3d3ff;
+  width: 116px;
+}
+.pq-cont-lt,
+.pq-cont-tr,
+.pq-body-outer .pq-cont-left {
+  border-color: #b3d2ff;
+}
+.pq-group-item {
+  border-color: #b3d2ff;
+}
+.pq-group-item:hover {
+  border-color: #9999ff;
+}
+.pq-group-remove:hover,
+.pq-group-icon:hover,
+.pq-icon-hover:hover {
+  border-color: #9999ff;
+}
+.pq-theme > .pq-grid-top {
+  background: #dae6f0;
+  color: #333;
+  border-color: #a8c4dc;
+}
+.pq-grid-title,
+.pq-group-header {
+  background: #a8c4dc;
+  border-color: #a8c4dc;
+}
+div.pq-toolbar {
+  border-color: #a8c4dc;
+}
+.pq-theme span.pq-separator {
+  border-right-color: #fff;
+  border-left-color: #b3d2ff;
+}
+div.pq-pager,
+div.pq-grid-summary {
+  border-top-color: #b3d2ff;
+  text-align: center
+}
+.pq-grid-bottom {
+  background: #b3d2ff;
+  color: #333;
+}
+.pq-header-outer {
+  background: #b3d2ff;
+  border-bottom-color: #b3d2ff;
+}
+.pq-summary-outer {
+  border-color: #b3d2ff;
+}
+.pq-header-outer .pq-cont-inner {
+  background: #b3d2ff;
+  background-color: #fefefe;
+  background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#ebebff));
+  background: -webkit-linear-gradient(top, #fefefe, #b3d2ff);
+  background: -moz-linear-gradient(top, #fefefe, #b3d2ff);
+  background: -ms-linear-gradient(top, #fefefe, #b3d2ff);
+  background: -o-linear-gradient(top, #fefefe, #b3d2ff);
+  filter: progid:DXImageTransform.Microsoft.gradient(GradientType=0, startColorstr=#fefefe, endColorstr=#ebebff);
+}
+.pq-grid-cell,
+.pq-grid-row {
+  border-color: #b3d2ff;
+}
+.pq-td-border-right > .pq-grid-row > .pq-grid-cell {
+  border-right-color: #b3d2ff;
+}
+.pq-grid-row > .pq-grid-number-cell,
+.pq-grid-number-col {
+  border-color: #a8c4dc;
+}
+.pq-body-outer .pq-grid-number-cell,
+.pq-summary-outer .pq-grid-number-cell {
+  background: #dae6f0;
+}
+.pq-grid-col {
+  border-color: #b3d2ff;
+}
+.pq-col-sort-asc,
+.pq-col-sort-desc {
+  background: #ccccff;
+  border-color: #9999ff;
+}
+.pq-grid-col,
+.pq-grid-number-col {
+  color: #333;
+}
+.pq-grid-col:hover {
+  background: #b3d2ff;
+}
+.pq-grid-row {
+     background: #e6eefb;
+  color: #333;
+}
+.pq-state-select.ui-state-highlight {
+  background: #e3e3d1;
+}
+.pq-grid-overlay {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: #9999ff;
+}
+.pq-number-overlay,
+.pq-head-overlay {
+  background: rgba(255, 255, 153, 0.25);
+}
+.pq-grid-cell-hover.ui-state-hover,
+.pq-grid-row-hover.ui-state-hover {
+  background: #e6f4ff;
+}
+.pq-grid-row.pq-striped {
+  background: #f5f5ff;
+}
+.pq-state-select.pq-striped,
+.pq-striped > .pq-grid-cell-hover,
+.pq-grid-row-hover.pq-striped {
+  background: #dbdbd1;
+}
+.pq-grid-cell.pq-focus {
+  border: 1px solid #777;
+}
+.pq-loading-bg {
+  background:rgba(0,0,0,0.36);
+}
+.pq-loading > .pq-loading-mask {
+  background: #b3d2ff;
+  border-color: #9999ff;
+  color: #333;
+}
+div.pq-loading-mask > div {
+  
+ 
+  width: 100px;
+    height: 100px;
+}
+.pqg-vert-frozen-line,
+.pqg-horiz-frozen-line {
+  border-color: #9999ff;
+}
+.pq-border-0 {
+  border-color: #9999ff;
+}
+.pq-border-1 {
+  border-color: #b3d2ff;
+}
+.pq-border-2 {
+  border-color: #b3d2ff;
+}
+.pq-bg-0 {
+  background: #b3d2ff;
+}
+.ui-widget.ui-widget-content{
+  font-size: 10px;
+}

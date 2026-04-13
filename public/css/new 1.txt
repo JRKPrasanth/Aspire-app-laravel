@@ -1,0 +1,146 @@
+   $operator =   $request->input('operator');
+                $machine_id  =   $request->input('machine_id');
+                $pipeid   =   $request->input('pipe_id');
+               
+                $product_number   =   $request->input('product_number');
+                $wireid   =   $request->input('wire_id');
+                
+                
+                $wire_details=\DB::select("SELECT * FROM `wire_plant_tbl` where action_take='4' ");
+           
+		$wire_count=sizeof($wire_details)/2;
+		$width=100/round($wire_count);
+		$height=100/round($wire_count);
+		$zones=[];
+		$x_axis=[];
+		$pin_no=[];
+		$flux=[];
+		$diameter=[];
+		$pin_no=[];
+		$flux_axis=[];
+		$dia_axis=[];
+		$y_axis=[];
+		$emp_name=[];
+		$machine_details=[];
+		$pipe_flux=[];
+		
+		$fluxtoaxis=[];
+		$fluxfrmaxis=[];
+		$flux_frm_range=[];
+		$fluxto_range=[];
+		
+		$dia_frm_range=[];
+		$diato_range=[];
+		$diafrmaxis=[];
+		$diatoaxis=[];	
+                
+               
+		$data = [];
+                
+            
+                $emp=\DB::select("SELECT b.employee_id, a.`avatar`,b.employee_name FROM `tb_users` a,employee_tbl b where a.employee_id=b.employee_id and b.employee_id='$operator'");
+                $machine=\DB::select("SELECT machine_name,machine_number from machine_tbl where machine_id='$machine_id'");
+                $pipe_id=\DB::select("SELECT flux_average from pipe_settings_tbl where pipe_id='$pipeid'");
+                $pipe_lines_id=\DB::select("SELECT * from pipe_lines_tbl where pipe_id='$pipeid'");
+                $flux_dia=\DB::select("SELECT * from product_tbl where product_id='$product_number'");
+                
+                $flux_det=\DB::select("SELECT * from flux_detail_tbl where flux_id='".$flux_dia[0]->flux_id."' AND flux_type_id='".$flux_dia[0]->flux_type_id."'");
+                $diameter_det=\DB::select("SELECT * from diameter_tbl where diameter_id='".$flux_dia[0]->diameter_id."'");
+                $flux_from_range=floatval($flux_det[0]->from_value);
+                
+                $flux_to_range=floatval($flux_det[0]->to_value);
+                $dia_from_range=floatval($diameter_det[0]->from_value);
+                $dia_to_range=floatval($diameter_det[0]->to_value);
+		
+                $wire_cut_details=\DB::select("SELECT * FROM `wire_measurement_tbl` where wire_id='$wireid'");
+                
+                $wire_id=$wireid;
+			
+                if(!empty($pipe_id))
+                {
+                    $emp_name[$wire_id]['pipe_val']=$pipe_id[0]->flux_average;		
+                }
+                else 
+                {
+                    $emp_name[$wire_id]['pipe_val']=''; 
+                }
+                
+                if(!empty($emp))
+                {
+                    $emp_name[$wire_id]['emp_name']=$emp[0]->employee_name;
+                    $emp_name[$wire_id]['image']=$emp[0]->avatar;		
+                }
+                else 
+                {
+                    $emp_name[$wire_id]['emp_name']='-';
+                    $emp_name[$wire_id]['image']='1.jpg'; 
+                }
+                if(!empty($flux_det))
+                {
+                    $flux_frm_range[$wire_id]['flux_frm']=$flux_from_range;
+                    $fluxto_range[$wire_id]['flux_to']=$flux_to_range;
+                } 
+                else 
+                {
+                    $flux_frm_range[$wire_id]['flux_frm']=$flux_from_range=0;
+                    $fluxto_range[$wire_id]['flux_to']=$flux_to_range=0;
+                } 
+                if(!empty($diameter_det))
+                {
+                    $dia_frm_range[$wire_id]['dia_frm']=$dia_from_range;
+                    $diato_range[$wire_id]['dia_to']=$dia_to_range;
+                } 
+                else 
+                {
+                    $dia_frm_range[$wire_id]['dia_frm']=0;
+                    $diato_range[$wire_id]['dia_to']=0;
+                }
+                $machine_details[$wire_id]=$machine[0]->machine_number;
+                foreach($pipe_lines_id as $pip_id=>$pip_val)
+                {		
+                    $flux[]=floatval($pip_val->flux);
+                    $pin_no[]=$pip_val->pipe_line_id;
+                }
+                foreach($wire_cut_details as $k1=>$v1) 
+                {
+                    $pin_no[]=$v1->pin_no;
+                    $flux[]=floatval($v1->flux);
+                }
+                $zones[]=array('value'=>count($pipe_lines_id),'color'=>'red','dashStyle'=>'dot');
+                $zones[]=array('color'=>'red');
+                $name="Flux (".$flux_from_range."-".$flux_to_range.")";
+                $flux_axis=array('name'=>$name,'data'=>$flux,'zoneAxis'=>'x','zones'=>$zones,'color'=>'red');
+                
+               
+                $y_axis[$wire_id][]=$flux_axis;
+                  
+                $x_axis[$wire_id]=$pin_no;
+                
+                
+		$flux=[];
+		$diameter=[];
+		$flux_axis=[];
+		$dia_axis=[];
+		$pin_no=[];
+		$zones=[];
+               
+		//$this->data['wire_details'] = $wire_details;
+               
+		$this->data['xaxis']=$x_axis;
+                
+		$this->data['yaxis']=$y_axis;
+		$this->data['emp_name']=$emp_name;
+                
+		$this->data['flux_frm_range']=$flux_frm_range;
+                
+               
+               
+		$this->data['fluxto_range']=$fluxto_range;
+		$this->data['dia_frm_range']=$dia_frm_range;
+		$this->data['diato_range']=$diato_range;
+		
+		$this->data['machine_details']=$machine_details;
+                $this->data['width']=$width."%";
+                $this->data['height']=$height."%";
+               
+                
