@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UserAnalyticsController extends Controller
 {
-    /** auto deploy checking 2
+    /** auto deploy checking
      * Log analytics events in batch
      * 
      * POST /api/analytics/batch
