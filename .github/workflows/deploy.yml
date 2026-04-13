@@ -20,4 +20,5 @@ jobs:
             cd /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
             git fetch origin main
             git merge --ff-only origin/main
+            chmod 755 /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
             php artisan config:cache
