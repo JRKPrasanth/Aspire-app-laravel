@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /home/jrkerpas/repositories/aspire_26_27
+            cd /home/jrkerpas/jrkapp.jrkerpaspire.in
             git fetch --all
             git reset --hard origin/main
             git pull origin main
