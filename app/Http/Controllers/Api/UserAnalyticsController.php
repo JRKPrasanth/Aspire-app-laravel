@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UserAnalyticsController extends Controller
 {
-    /** auto deploy checking with permission change for access folder and files 14
+    /** auto deploy checking with permission change for access folder and files 15
      * Log analytics events in batch
      * 
      * POST /api/analytics/batch
