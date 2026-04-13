@@ -1,18 +1,14 @@
 name: Deploy to cPanel
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
       - name: Deploy to cPanel via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -24,4 +20,7 @@ jobs:
             cd /home/jrkerpas/jrkapp.jrkerpaspire.in
             git fetch --all
             git reset --hard origin/main
-            git pull origin main
+            rsync -av --exclude='.git' --exclude='node_modules' --exclude='.env' /home/jrkerpas/jrkapp.jrkerpaspire.in/ /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in/
+            cd /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
+            php artisan config:cache
+            php artisan route:cache
