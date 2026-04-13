@@ -23,4 +23,3 @@ jobs:
             rsync -av --exclude='.git' --exclude='node_modules' --exclude='.env' /home/jrkerpas/jrkapp.jrkerpaspire.in/ /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in/
             cd /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
             php artisan config:cache
-            php artisan route:cache
