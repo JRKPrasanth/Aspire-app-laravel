@@ -1,0 +1,25 @@
+name: Deploy to cPanel
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Deploy to cPanel via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: jrkerpaspire.in
+          username: jrkerpas
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
+            git config core.fileMode false
+            git fetch origin main
+            git merge --ff-only origin/main
+            chmod 755 /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
+            php artisan config:cache

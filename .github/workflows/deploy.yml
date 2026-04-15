@@ -1,25 +1,50 @@
-name: Deploy to cPanel
+name: Deploy to cPanel via SSH
 on:
   push:
     branches:
       - main
+concurrency:
+  group: cpanel-ssh-deploy
+  cancel-in-progress: true
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      - name: Deploy to cPanel via SSH
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: jrkerpaspire.in
-          username: jrkerpas
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Deploy changed files with rsync
+        run: |
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='vendor/' \
+            --exclude='.env' \
+            --exclude='*.sql' \
+            --exclude='*.apk' \
+            --exclude='*.zip' \
+            --exclude='public/' \
+            --exclude='storage/logs/' \
+            --exclude='storage/framework/' \
+            --exclude='bootstrap/cache/' \
+            ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/jrkerpas/public_html/jrkapp.jrkerpaspire.in/
+      - name: Clear Laravel cache
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
+          port: ${{ secrets.SSH_PORT }}
           script: |
             cd /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
-            git config core.fileMode false
-            git fetch origin main
-            git merge --ff-only origin/main
-            chmod 755 /home/jrkerpas/public_html/jrkapp.jrkerpaspire.in
-            php artisan config:cache
+            if [ -f artisan ]; then
+              php artisan optimize:clear || /usr/local/bin/php artisan optimize:clear || true
+            fi
