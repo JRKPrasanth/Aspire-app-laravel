@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\LeaveController;
@@ -15,6 +16,11 @@ use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\AppController;
 use App\Http\Controllers\Api\DeviceTrackingController;
 use App\Http\Controllers\Api\UserAnalyticsController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\WorkorderController;
+use App\Http\Controllers\Api\MrpController;
+use App\Http\Controllers\Api\JobCardController;
+use App\Http\Controllers\Api\MaterialController;
 
 Route::post('test-log', function (Request $request) {
     Log::info('Test log route hit', ['request' => $request->all()]);
@@ -28,6 +34,76 @@ Route::get('app/version/check', [AppController::class, 'checkVersion']);
 Route::get('app/versions', [AppController::class, 'getAllVersions']);
 Route::post('app/versions', [AppController::class, 'createVersion']);
 Route::put('app/versions/{id}', [AppController::class, 'updateVersion']);
+
+/**
+ * ============================================================
+ * WORKORDER APIs
+ * ============================================================
+ */
+Route::middleware('auth:api')->prefix('workorders')->group(function () {
+    // products/my must be declared before /{id} to avoid route conflict
+    Route::get('/products/my', [WorkorderController::class, 'getMyProducts']);
+    Route::get('/', [WorkorderController::class, 'index']);
+    Route::post('/', [WorkorderController::class, 'store']);
+    Route::get('/{id}', [WorkorderController::class, 'show']);
+});
+
+/**
+ * ============================================================
+ * MRP (MATERIAL REQUIREMENT PLAN) APIs
+ * ============================================================
+ */
+Route::middleware('auth:api')->prefix('mrp')->group(function () {
+    // workorders/pending must be declared before workorders/{id} to avoid route conflict
+    Route::get('/workorders', [MrpController::class, 'getWorkordersForMrp']);
+    Route::get('/workorders/{id}/lines', [MrpController::class, 'getWorkorderLines']);
+    Route::get('/', [MrpController::class, 'index']);
+    Route::post('/', [MrpController::class, 'store']);
+    Route::get('/{id}', [MrpController::class, 'show']);
+    Route::put('/{id}/approve', [MrpController::class, 'approve']);
+});
+
+/**
+ * ============================================================
+ * JOB CARD APIs
+ * ============================================================
+ */
+// WIP Stats (combined MRP + Job Card counts for the home dashboard)
+Route::middleware('auth:api')->get('/wip/stats', [MrpController::class, 'wipStats']);
+
+Route::middleware('auth:api')->prefix('jobcards')->group(function () {
+    Route::get('/approved-plans', [JobCardController::class, 'getApprovedPlans']);
+    Route::get('/', [JobCardController::class, 'index']);
+    Route::post('/', [JobCardController::class, 'store']);
+    Route::get('/{id}', [JobCardController::class, 'show']);
+});
+
+/**
+ * ============================================================
+ * MATERIAL ISSUE / RECEIVE / STORE MOVE / COMPLETION APIs
+ * ============================================================
+ */
+Route::middleware('auth:api')->prefix('material')->group(function () {
+    // Material Issue
+    Route::get('/issue/list',             [MaterialController::class, 'getMaterialIssueList']);
+    Route::get('/issue/{jobId}/lines',    [MaterialController::class, 'getMaterialIssueLines']);
+    Route::post('/issue/{jobId}',         [MaterialController::class, 'saveMaterialIssue']);
+    Route::get('/product/{productId}/qoh', [MaterialController::class, 'getProductQoh']);
+
+    // Material Receive / Acknowledge
+    Route::get('/receive/list',           [MaterialController::class, 'getMaterialReceiveList']);
+    Route::post('/receive/{jobId}',       [MaterialController::class, 'saveMaterialReceive']);
+
+    // Packing Job Card Status (Store Move)
+    Route::get('/packing-status',         [MaterialController::class, 'getPackingJobCardStatus']);
+    Route::get('/storemove/{jobId}/details', [MaterialController::class, 'getStoreMoveDetails']);
+    Route::get('/subinventories/{subinvId}/locators', [MaterialController::class, 'getLocators']);
+    Route::post('/storemove/{jobId}',     [MaterialController::class, 'saveStoreMoveEntry']);
+
+    // Job Card Completion
+    Route::get('/completion/list',        [MaterialController::class, 'getCompletionList']);
+    Route::post('/completion/{jobId}',    [MaterialController::class, 'completeJobCard']);
+});
 
 /**
  * ============================================================
@@ -79,6 +155,10 @@ Route::get('department/{departmentId}/employees', [AuthController::class, 'getDe
 // Employee leave history (API) - returns JSON history for an employee with status filtering
 Route::get('employee/{id}/leave-history', [LeaveController::class, 'getEmployeeLeaveHistory']);
 
+// Employee dashboard (API) - attendance events + leave summary + activity chart data
+Route::get('employee/{id}/dashboard', [DashboardController::class, 'employeeDashboard'])
+    ->middleware('auth:api');
+
 // Get permission quota for a specific month (API) - check remaining requests and hours
 Route::get('employee/{id}/permission-quota', [LeaveController::class, 'getPermissionQuota']);
 
@@ -87,6 +167,9 @@ Route::get('employee/{id}/od-details', [LeaveController::class, 'getODDetails'])
 
 // Check initiated leaves in a specific month (API) - for blocking multiple requests in same month
 Route::get('employee/{id}/initiated-leaves-month', [LeaveController::class, 'getInitiatedLeavesInMonth']);
+
+// Get Casual Leave (CL) accrual status - counts initiated/pending/approved against monthly eligible quota
+Route::get('employee/{id}/cl-accrual', [LeaveController::class, 'getCLAccrualStatus']);
 
 // Get leave approver (reporting manager) for an employee
 Route::get('leave/approver', [LeaveController::class, 'getLeaveApprover']);

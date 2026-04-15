@@ -518,6 +518,68 @@ class LeaveController extends Controller
                 ]);
             }
 
+            // ✅ CASUAL LEAVE (CL - ID 130) MONTHLY ACCRUAL VALIDATION
+            // Business Rule: Employee earns 1 CL per month.
+            // consumed = INITIATED + PENDING + APPROVE + PARTIALLY_APPROVE (rejected/cancelled excluded)
+            // available = current_month_number - consumed
+            // A new leave CANNOT be saved if requested days > available.
+            if ($leaveTypeId == 130) {
+                $requestedDays = floatval($validated['no_of_days'] ?? 0);
+
+                // Determine which year/month the leave belongs to
+                $leaveDate        = !empty($validated['start_date']) ? new \DateTime($validated['start_date']) : new \DateTime();
+                $leaveMonthNumber = (int)$leaveDate->format('n'); // 1 = Jan … 12 = Dec
+                $leaveYear        = (int)$leaveDate->format('Y');
+                $currentYear      = (int)date('Y');
+
+                // Monthly accrual cap: for the current year use months elapsed; for past years use 10
+                $monthlyEligible = ($leaveYear === $currentYear) ? $leaveMonthNumber : 10;
+
+                // Count all active (non-rejected/non-cancelled) CL leaves for this employee in that year
+                $consumed = DB::table('hr_leaves_t')
+                    ->where('employee_id', $validated['employee_id'])
+                    ->where('leave_type', 130)
+                    ->whereYear('start_date', $leaveYear)
+                    ->whereIn('leave_status', ['INITIATED', 'PENDING', 'APPROVE', 'PARTIALLY_APPROVE'])
+                    ->sum(DB::raw('CAST(no_of_days AS DECIMAL(5,2))'));
+
+                $consumed  = round(floatval($consumed ?? 0), 2);
+                $available = round(max(0, $monthlyEligible - $consumed), 2);
+
+                Log::info('CL Accrual Validation', [
+                    'employee_id'      => $validated['employee_id'],
+                    'leave_date'       => $validated['start_date'],
+                    'leave_month'      => $leaveMonthNumber,
+                    'monthly_eligible' => $monthlyEligible,
+                    'consumed'         => $consumed,
+                    'available'        => $available,
+                    'requested'        => $requestedDays,
+                ]);
+
+                if ($requestedDays > $available) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'status'  => false,
+                        'code'    => 'CL_ACCRUAL_LIMIT_EXCEEDED',
+                        'message' => "Casual Leave accrual limit exceeded.\n\n"
+                            . "Months elapsed: {$leaveMonthNumber}\n"
+                            . "Eligible (accrued): {$monthlyEligible} day(s)\n"
+                            . "Already consumed (initiated/pending/approved): {$consumed} day(s)\n"
+                            . "Available: {$available} day(s)\n"
+                            . "Requested: {$requestedDays} day(s)\n\n"
+                            . "Note: Initiated and pending leaves are counted as consumed immediately.",
+                        'data' => [
+                            'leave_month'      => $leaveMonthNumber,
+                            'monthly_eligible' => $monthlyEligible,
+                            'consumed'         => $consumed,
+                            'available'        => $available,
+                            'requested'        => $requestedDays,
+                        ],
+                    ], 422);
+                }
+            }
+
             // Attendance check: choose the appropriate date to check
             $attendanceDate = null;
             if ($validated['leave_type_id'] == 265) { // permission: use date portion of start_date_time if provided else start_date
@@ -564,6 +626,18 @@ class LeaveController extends Controller
                     $validated['od_start_date'] = null;
                     $validated['od_end_date'] = null;
                     $validated['od_no_of_days'] = null;
+                }
+            }
+
+            // For permission (265), derive start_date/end_date from start_date_time if not explicitly provided
+            if ($validated['leave_type_id'] == 265) {
+                if (empty($validated['start_date']) && !empty($validated['start_date_time'])) {
+                    $validated['start_date'] = date('Y-m-d', strtotime($validated['start_date_time']));
+                }
+                if (empty($validated['end_date'])) {
+                    $validated['end_date'] = !empty($validated['end_date_time'])
+                        ? date('Y-m-d', strtotime($validated['end_date_time']))
+                        : ($validated['start_date'] ?? null);
                 }
             }
 
@@ -617,9 +691,9 @@ class LeaveController extends Controller
                 'start_date_time'   => $validated['start_date_time'] ?? null,
                 'end_date_time'     => $validated['end_date_time'] ?? null,
                 'no_of_days'        => $validated['no_of_days'],
-                'alloted_days'      => $validated['alloted_days'] ?? $validated['no_of_days'],
+                'alloted_days'      => $validated['alloted_days'] ?: $validated['no_of_days'],
                 'no_of_hrs'         => $validated['no_of_hrs'] ?? null,
-                'alloted_hrs'       => $validated['alloted_hrs'] ?? null,
+                'alloted_hrs'       => $validated['alloted_hrs'] ?: $validated['no_of_hrs'] ?? null,
                 'session'           => $validated['session'] ?? null,
                 'leave_status'      => $leave_status,
                 'leave_reason'      => $validated['reason'] ?? null,
@@ -1436,6 +1510,7 @@ class LeaveController extends Controller
             'decision' => 'nullable|in:APPROVE,REJECT',
             'alloted_days' => 'nullable|numeric|min:0',
             'od_alloted_days' => 'nullable|string|max:255',
+            'alloted_hrs' => 'nullable|string|max:20',
             'comments' => 'nullable|string|max:250',
             'approval_reason' => 'nullable|string|max:100',
         ]);
@@ -1530,6 +1605,13 @@ class LeaveController extends Controller
             // Add lop_days if table supports it
             if (Schema::hasColumn('hr_leaves_t', 'lop_days')) {
                 $updateData['lop_days'] = $lopDays;
+            }
+
+            // Store alloted_hrs for Permission type (265)
+            if ($leave->leave_type == 265 && isset($validated['alloted_hrs'])) {
+                if (Schema::hasColumn('hr_leaves_t', 'alloted_hrs')) {
+                    $updateData['alloted_hrs'] = $validated['alloted_hrs'];
+                }
             }
 
             // Map leave_type to balance field (only for approved portion)
@@ -2283,6 +2365,102 @@ class LeaveController extends Controller
                 'success' => false,
                 'message' => 'Error fetching OD details: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Get Casual Leave (CL) Accrual Status for an employee
+     * GET /api/employee/{id}/cl-accrual?year=YYYY
+     *
+     * Business Rule: Employee earns exactly 1 CL per month.
+     * consumed = INITIATED + PENDING + APPROVE + PARTIALLY_APPROVE (rejected/cancelled excluded)
+     * available = current_month_number - consumed
+     *
+     * Returns: monthly_eligible, consumed, available, breakdown_by_status
+     */
+    public function getCLAccrualStatus(Request $request, $employee_id)
+    {
+        try {
+            $user = auth()->user();
+            if (!$user || !$user->employee_id) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            // Employees may only check their own accrual status
+            if ((int)$user->employee_id !== (int)$employee_id) {
+                return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+            }
+
+            $year        = (int)($request->query('year', date('Y')));
+            $currentYear = (int)date('Y');
+            $currentMonth = (int)date('n'); // 1-12
+
+            // Monthly accrual: 1 day per elapsed month in the current year
+            // For past years the full 10-day annual entitlement is used as the cap
+            $monthlyEligible = ($year === $currentYear) ? $currentMonth : 10;
+
+            // [Cause 3 fix] Count active (non-rejected/non-cancelled) CL leaves for the year.
+            // whereNotNull('start_date') prevents null-dated records from being counted. 
+            // SELECT SUM(CAST(no_of_days AS DECIMAL(5,2))) FROM hr_leaves_t WHERE employee_id = 5
+            // AND leave_type = 130 AND start_date IS NOT NULL AND YEAR(start_date) = 2026 AND leave_status IN ('INITIATED', 'PENDING', 'APPROVE', 'PARTIALLY_APPROVE')
+
+            $consumed = DB::table('hr_leaves_t')
+                ->where('employee_id', $employee_id)
+                ->where('leave_type', 130)
+                ->whereNotNull('start_date')                          // exclude records with no date
+                ->whereYear('start_date', $year)
+                ->whereIn('leave_status', ['INITIATED', 'PENDING', 'APPROVE', 'PARTIALLY_APPROVE'])
+                ->sum(DB::raw('CAST(no_of_days AS DECIMAL(5,2))'));
+
+            $consumed  = round(floatval($consumed ?? 0), 2);
+            $available = round(max(0, $monthlyEligible - $consumed), 2);
+
+            // Per-status breakdown for transparency
+            $breakdown = DB::table('hr_leaves_t')
+                ->select(
+                    'leave_status',
+                    DB::raw('SUM(CAST(no_of_days AS DECIMAL(5,2))) as total_days'),
+                    DB::raw('COUNT(*) as count')
+                )
+                ->where('employee_id', $employee_id)
+                ->where('leave_type', 130)
+                ->whereNotNull('start_date')
+                ->whereYear('start_date', $year)
+                ->groupBy('leave_status')
+                ->get();
+
+            // Ledger balance (informational only – NOT used for eligibility)
+            $ledgerBalance = DB::table('Leave_balance_tbl')
+                ->where('employee_id', $employee_id)
+                ->value('causal_leave');
+
+            Log::info('getCLAccrualStatus result', [
+                'employee_id'      => $employee_id,
+                'year'             => $year,
+                'current_month'    => $currentMonth,
+                'monthly_eligible' => $monthlyEligible,
+                'consumed'         => $consumed,
+                'available'        => $available,
+                'ledger_balance'   => $ledgerBalance,
+                'breakdown'        => $breakdown,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data'    => [
+                    'year'               => $year,
+                    'current_month'      => $currentMonth,
+                    'monthly_eligible'   => $monthlyEligible,
+                    'consumed'           => $consumed,
+                    'available'          => $available,
+                    'balance_in_ledger'  => round(floatval($ledgerBalance ?? 0), 2),
+                    'breakdown_by_status' => $breakdown,
+                    'note'               => 'consumed includes INITIATED, PENDING, and APPROVED leaves. REJECTED and CANCELLED are excluded.',
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('getCLAccrualStatus error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
 
