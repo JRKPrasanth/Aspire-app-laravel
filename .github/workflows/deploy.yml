@@ -22,7 +22,7 @@ jobs:
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
       - name: Deploy changed files with rsync
         run: |
-          rsync -az --delete \
+          rsync -az \
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='node_modules/' \
@@ -32,8 +32,7 @@ jobs:
             --exclude='*.apk' \
             --exclude='*.zip' \
             --exclude='public/' \
-            --exclude='storage/logs/' \
-            --exclude='storage/framework/' \
+            --exclude='storage/' \
             --exclude='bootstrap/cache/' \
             ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/jrkerpas/public_html/jrkapp.jrkerpaspire.in/
       - name: Clear Laravel cache
